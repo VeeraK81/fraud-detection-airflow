@@ -1,0 +1,8 @@
+pyarrow<10.1.0,>=10.0.1
+pandas
+numpy
+boto3
+requests
+apache-airflow-providers-ssh
+apache-airflow-providers-amazon
+mlflow

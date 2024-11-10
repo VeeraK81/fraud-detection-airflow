@@ -33,7 +33,7 @@ RUN usermod -u 1000 airflow
 USER airflow
 
 # Install any additional dependencies if needed
-COPY requirements.txt requirements.txt 
+COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 

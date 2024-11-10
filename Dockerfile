@@ -35,11 +35,7 @@ RUN usermod -u 1000 airflow
 USER airflow
 
 # Install any additional dependencies if needed
-<<<<<<< HEAD
 COPY requirements.txt requirements.txt
-=======
-COPY requirements.txt requirements.txt 
->>>>>>> 1605461 (initial commit)
 
 RUN pip install -r requirements.txt
 

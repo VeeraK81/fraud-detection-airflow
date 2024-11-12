@@ -34,8 +34,8 @@ RUN usermod -u 1000 airflow
 
 USER airflow
 
-ENV S3_BUCKET_NAME=${S3_BUCKET_NAME}
-ENV S3_KEY=${S3_KEY}
+ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
+ENV S3_KEY=$S3_KEY
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt

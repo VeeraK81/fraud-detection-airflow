@@ -91,13 +91,13 @@ with DAG(
             return
         
         s3_hook = S3Hook(aws_conn_id="aws_default")
+        transaction_data_str = json.dumps(transaction_data)
 
         # Check if the file already exists in S3
         try:
             if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
                 # Read existing data and append the new data
                 existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-                transaction_data_str = json.dumps(transaction_data)
                 updated_data = existing_data + "\n" + transaction_data_str
                 logging.info("Appending data to existing file in S3.")
             else:

@@ -17,6 +17,8 @@ import pandas as pd
 from io import StringIO
 import logging
 import os
+import json
+from airflow.models import Variable
 
 # Jenkins Configuration: Load from Airflow Variables
 # JENKINS_URL = Variable.get("JENKINS_URL")
@@ -95,11 +97,12 @@ with DAG(
             if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
                 # Read existing data and append the new data
                 existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-                updated_data = existing_data + "\n" + transaction_data
+                transaction_data_str = json.dumps(transaction_data)
+                updated_data = existing_data + "\n" + transaction_data_str
                 logging.info("Appending data to existing file in S3.")
             else:
                 # If the file doesn't exist, use the new data as the file content
-                updated_data = transaction_data
+                updated_data = transaction_data_str
                 logging.info("Creating new file in S3 with transaction data.")
 
             # Write the updated data back to S3

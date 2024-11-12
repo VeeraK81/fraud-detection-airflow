@@ -8,6 +8,7 @@ from airflow.providers.amazon.aws.operators.ec2 import (
     EC2TerminateInstanceOperator,
 )
 from airflow.hooks.base import BaseHook
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import paramiko
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
@@ -37,7 +38,12 @@ from io import StringIO
 # if not all([JENKINS_URL, JENKINS_USER, JENKINS_TOKEN]):
 #     raise ValueError("Missing one or more Jenkins configuration environment variables")
 
-# DAG Configuration
+
+# Constants for S3 configuration
+S3_BUCKET_NAME = Variable.get("S3_BUCKET_NAME")
+S3_KEY = Variable.get("S3_KEY")
+
+# DAG configuration
 DAG_ID = 'fraud_detection_training_dag'
 default_args = {
     'owner': 'airflow',
@@ -51,108 +57,62 @@ with DAG(
     dag_id=DAG_ID,
     schedule_interval=None,
     default_args=default_args,
-    description="Poll Jenkins and run ML training",
+    description="Upload or append data to S3 for fraud detection training",
     catchup=False,
     tags=['fraud-detection-training'],
 ) as dag:
 
-    # Step 1: Poll Jenkins Job Status
-    # @task
-    # def poll_jenkins_job():
-    #     """Poll Jenkins for the job status and check for successful build."""
-    #     import requests
-    #     import time
-
-    #     # Step 1: Get the latest build number from the job API
-    #     job_url = f"{JENKINS_URL}/job/{JENKINS_JOB_NAME}/api/json"
-    #     response = requests.get(job_url, auth=(JENKINS_USER, JENKINS_TOKEN))
-    #     if response.status_code != 200:
-    #         raise Exception(f"Failed to query Jenkins API: {response.status_code}")
-
-    #     job_info = response.json()
-    #     latest_build_number = job_info['lastBuild']['number']
-
-    #     # Step 2: Poll the latest build's status
-    #     build_url = f"{JENKINS_URL}/job/{JENKINS_JOB_NAME}/{latest_build_number}/api/json"
-
-    #     while True:
-    #         response = requests.get(build_url, auth=(JENKINS_USER, JENKINS_TOKEN))
-    #         if response.status_code == 200:
-    #             build_info = response.json()
-    #             if not build_info['building']:  # Build is finished
-    #                 if build_info['result'] == 'SUCCESS':
-    #                     print("Jenkins build successful!")
-    #                     return True
-    #                 else:
-    #                     raise Exception("Jenkins build failed!")
-    #         else:
-    #             raise Exception(f"Failed to query Jenkins API: {response.status_code}")
-            
-    #         time.sleep(30)  # Poll every 30 seconds
-
-    
-    # @task
-    # def log_metrics_to_mlflow():
-    #     """Log metrics and model details to MLflow after Jenkins job completion."""
-    #     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-    #     mlflow.start_run(experiment_id=MLFLOW_EXPERIMENT_ID)
-
-    #     mlflow.log_param("model_type", "RandomForest")
-    #     accuracy = 0.95  # Replace with actual metric values
-    #     mlflow.log_metric("accuracy", accuracy)
-
-    #     mlflow.end_run()
-    #     print("Metrics logged to MLflow.")
-    #     # return accuracy
-        
-
-    # # @task
-    # # def upload_metrics_to_s3(accuracy):
-    # #     """Upload metrics data directly to S3 without saving a CSV file locally."""
-    # #     metrics_data = {
-    # #         "experiment_id": MLFLOW_EXPERIMENT_ID,
-    # #         "model_type": "RandomForest",
-    # #         "accuracy": accuracy,
-    # #     }
-
-    # #     # Convert metrics to DataFrame and then to CSV in memory
-    # #     df = pd.DataFrame([metrics_data])
-    # #     csv_buffer = StringIO()
-    # #     df.to_csv(csv_buffer, index=False)
-    # #     csv_buffer.seek(0)  # Move to the beginning of the StringIO buffer
-
-    # #     # Upload to S3 using boto3
-    # #     s3_client = boto3.client('s3', aws_access_key_id=aws_access_key_id,
-    # #                               aws_secret_access_key=aws_secret_access_key,
-    # #                               region_name=region_name)
-
-    # #     s3_object_name = "mlflow_metrics/mlflow_metrics.csv"
-    # #     s3_client.put_object(Bucket="flow-bucket-ml", Key=s3_object_name, Body=csv_buffer.getvalue())
-    # #     print("Metrics uploaded to S3.")
-    
-    
-    
-    # # @task
-    # # def save_log_to_file(log_content):
-    # #     """Save the Jenkins log to a local file."""
-    # #     local_file_path = "/tmp/jenkins_build_log.txt"
-    # #     with open(local_file_path, 'w') as f:
-    # #         f.write(str(log_content))
-    # #     return local_file_path
-
-    # # # Task Chaining (DAG Workflow)
-    # jenkins_poll = poll_jenkins_job()
-    # accuracy = log_metrics_to_mlflow()
-    # # getfile = save_log_to_file(jenkins_poll)
-    # # s3_upload = upload_metrics_to_s3(accuracy)
-
-    # # Set task dependencies
-    # jenkins_poll >> accuracy 
-    
     @task
-    def test_task():
-        print("Successfully reached task! --------------------------------------------------------------")
+    def transaction_consume(**kwargs):
+        """
+        Fetch transaction data from the DAG run configuration.
+        """
+        config = kwargs.get('dag_run').conf
+        transaction_data = config.get('transaction_data')
         
-    test = test_task()
-    
-    test
+        if transaction_data is None:
+            logging.warning("No transaction data found in config. Please check dag_run.conf.")
+        else:
+            logging.info(f"Received transaction data: {transaction_data}")
+        
+        return transaction_data
+
+    @task
+    def upload_or_append_to_s3(transaction_data):
+        """
+        Uploads transaction data to S3, appending to an existing file if present.
+        """
+        if not transaction_data:
+            logging.error("No transaction data provided, aborting S3 upload.")
+            return
+        
+        s3_hook = S3Hook(aws_conn_id="aws_default")
+
+        # Check if the file already exists in S3
+        try:
+            if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
+                # Read existing data and append the new data
+                existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
+                updated_data = existing_data + "\n" + transaction_data
+                logging.info("Appending data to existing file in S3.")
+            else:
+                # If the file doesn't exist, use the new data as the file content
+                updated_data = transaction_data
+                logging.info("Creating new file in S3 with transaction data.")
+
+            # Write the updated data back to S3
+            s3_hook.load_string(
+                string_data=updated_data,
+                key=S3_KEY,
+                bucket_name=S3_BUCKET_NAME,
+                replace=True  # Overwrite existing file if it exists
+            )
+            logging.info(f"Data successfully uploaded to {S3_BUCKET_NAME}/{S3_KEY}")
+        
+        except Exception as e:
+            logging.error(f"Failed to upload data to S3: {str(e)}")
+            raise
+
+    # Define the task dependencies
+    transaction_data = transaction_consume()
+    upload_or_append_to_s3(transaction_data)

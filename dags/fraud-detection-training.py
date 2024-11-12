@@ -3,13 +3,13 @@ import time
 from datetime import datetime
 from airflow.decorators import task
 from airflow.models.dag import DAG
-from airflow.providers.amazon.aws.operators.ec2 import (
-    EC2CreateInstanceOperator,
-    EC2TerminateInstanceOperator,
-)
+# from airflow.providers.amazon.aws.operators.ec2 import (
+#     EC2CreateInstanceOperator,
+#     EC2TerminateInstanceOperator,
+# )
 from airflow.hooks.base import BaseHook
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-import paramiko
+# import paramiko
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
 import mlflow

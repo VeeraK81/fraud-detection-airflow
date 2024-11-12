@@ -16,6 +16,7 @@ import mlflow
 import pandas as pd
 from io import StringIO
 import logging
+import os
 
 # Jenkins Configuration: Load from Airflow Variables
 # JENKINS_URL = Variable.get("JENKINS_URL")
@@ -41,8 +42,8 @@ import logging
 
 
 # Constants for S3 configuration
-S3_BUCKET_NAME = Variable.get("S3_BUCKET_NAME")
-S3_KEY = Variable.get("S3_KEY")
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+S3_KEY = os.getenv("S3_KEY")
 
 # DAG configuration
 DAG_ID = 'fraud_detection_training_dag'

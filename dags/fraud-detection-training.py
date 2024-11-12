@@ -17,6 +17,7 @@ import pandas as pd
 from io import StringIO
 import logging
 import os
+import csv
 import json
 from airflow.models import Variable
 
@@ -81,39 +82,91 @@ with DAG(
         
         return transaction_data
 
+    # @task
+    # def upload_or_append_to_s3(transaction_data):
+    #     """
+    #     Uploads transaction data to S3, appending to an existing file if present.
+    #     """
+    #     if not transaction_data:
+    #         logging.error("No transaction data provided, aborting S3 upload.")
+    #         return
+        
+    #     s3_hook = S3Hook(aws_conn_id="aws_default")
+    #     transaction_data_str = json.dumps(transaction_data)
+
+    #     # Check if the file already exists in S3
+    #     try:
+    #         if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
+    #             # Read existing data and append the new data
+    #             existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
+    #             updated_data = existing_data + "\n" + transaction_data_str
+    #             logging.info("Appending data to existing file in S3.")
+    #         else:
+    #             # If the file doesn't exist, use the new data as the file content
+    #             updated_data = transaction_data_str
+    #             logging.info("Creating new file in S3 with transaction data.")
+
+    #         # Write the updated data back to S3
+    #         s3_hook.load_string(
+    #             string_data=updated_data,
+    #             key=S3_KEY,
+    #             bucket_name=S3_BUCKET_NAME,
+    #             replace=True  # Overwrite existing file if it exists
+    #         )
+    #         logging.info(f"Data successfully uploaded to {S3_BUCKET_NAME}/{S3_KEY}")
+        
+    #     except Exception as e:
+    #         logging.error(f"Failed to upload data to S3: {str(e)}")
+    #         raise
     @task
     def upload_or_append_to_s3(transaction_data):
         """
-        Uploads transaction data to S3, appending to an existing file if present.
+        Uploads transaction data to S3 in CSV format, appending to an existing file if present.
         """
         if not transaction_data:
             logging.error("No transaction data provided, aborting S3 upload.")
             return
-        
+
         s3_hook = S3Hook(aws_conn_id="aws_default")
-        transaction_data_str = json.dumps(transaction_data)
-
-        # Check if the file already exists in S3
+        
         try:
-            if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
-                # Read existing data and append the new data
-                existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-                updated_data = existing_data + "\n" + transaction_data_str
-                logging.info("Appending data to existing file in S3.")
-            else:
-                # If the file doesn't exist, use the new data as the file content
-                updated_data = transaction_data_str
-                logging.info("Creating new file in S3 with transaction data.")
+            # Step 1: Check if the CSV file already exists in S3
+            csv_rows = []
+            try:
+                if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
+                    # Read existing CSV data from S3
+                    existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
+                    existing_csv = StringIO.StringIO(existing_data)
+                    reader = csv.reader(existing_csv)
+                    csv_rows = list(reader)
+                    logging.info("Appending data to existing CSV file in S3.")
+                else:
+                    logging.info("Creating new CSV file in S3 with transaction data.")
+            except Exception as e:
+                logging.error(f"Error reading existing CSV from S3: {str(e)}")
+                raise
 
-            # Write the updated data back to S3
+            # Step 2: Prepare the transaction data as a row to append
+            if not csv_rows:
+                # If CSV is empty or doesn't exist, add headers as the first row
+                csv_rows.append(transaction_data.keys())
+            
+            # Append the transaction data as a new row
+            csv_rows.append(transaction_data.values())
+
+            # Step 3: Write the updated CSV data back to S3
+            output = StringIO.StringIO()
+            writer = csv.writer(output)
+            writer.writerows(csv_rows)
+            
             s3_hook.load_string(
-                string_data=updated_data,
+                string_data=output.getvalue(),
                 key=S3_KEY,
                 bucket_name=S3_BUCKET_NAME,
-                replace=True  # Overwrite existing file if it exists
+                replace=True  # Overwrite the existing file
             )
             logging.info(f"Data successfully uploaded to {S3_BUCKET_NAME}/{S3_KEY}")
-        
+
         except Exception as e:
             logging.error(f"Failed to upload data to S3: {str(e)}")
             raise

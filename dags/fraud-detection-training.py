@@ -136,7 +136,7 @@ with DAG(
                 if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
                     # Read existing CSV data from S3
                     existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-                    existing_csv = StringIO.StringIO(existing_data)
+                    existing_csv = StringIO(existing_data)
                     reader = csv.reader(existing_csv)
                     csv_rows = list(reader)
                     logging.info("Appending data to existing CSV file in S3.")
@@ -155,7 +155,7 @@ with DAG(
             csv_rows.append(transaction_data.values())
 
             # Step 3: Write the updated CSV data back to S3
-            output = StringIO.StringIO()
+            output = StringIO()
             writer = csv.writer(output)
             writer.writerows(csv_rows)
             

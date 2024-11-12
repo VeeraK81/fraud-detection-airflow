@@ -15,6 +15,7 @@ from airflow.models import Variable
 import mlflow
 import pandas as pd
 from io import StringIO
+import logging
 
 # Jenkins Configuration: Load from Airflow Variables
 # JENKINS_URL = Variable.get("JENKINS_URL")

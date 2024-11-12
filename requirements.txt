@@ -4,5 +4,5 @@ numpy
 boto3
 requests
 apache-airflow-providers-ssh
-apache-airflow-providers-amazon
 mlflow
+apache-airflow-providers-amazon==5.1.0

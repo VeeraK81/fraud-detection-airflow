@@ -18,6 +18,11 @@ USER root
 # COPY DAGS & PEM Key
 COPY ./dags /opt/airflow/dags
 
+# Use BuildKit to securely handle secrets
+RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
+    cat /run/secrets/SERVER_SECRETS > /tmp/ml-training-key && \
+    echo "$(cat /tmp/ml-training-key)" >> /opt/airflow/ml-training-key.pem
+
 # Initialize the Airflow database (PostgreSQL in this case)
 # IF YOU WANT TO HAVE THAT RUNNING IN HUGGINGFACE, YOU NEED TO HARD CODE THE VALUE HERE UNFORTUNATELY
 # DON'T STAGE THAT IN A PRIVATE REPO BECAUSE THE ENV VARIABLE IS HARD CODED IN PLAIN TEXT
@@ -31,6 +36,10 @@ RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
 RUN rm /tmp/POSTGRES_URL
 
 RUN usermod -u 1000 airflow
+
+# Ensure correct permissions for the .pem file
+RUN chmod 400 /opt/airflow/ml-training-key.pem \
+   && chown airflow /opt/airflow/ml-training-key.pem
 
 USER airflow
 

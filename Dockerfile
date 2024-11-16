@@ -24,7 +24,7 @@ COPY ./dags /opt/airflow/dags
 # IF YOU STAGE THAT IN HUGGING FACE SPACE, YOU DON'T HAVE A CHOICE THOUGH
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETS
-RUN --mount=type=secret,id=EXAMPLE,mode=0444 \
+RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
     cat /run/secrets/EXAMPLE > /tmp/POSTGRES_URL && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment
 

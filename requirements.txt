@@ -5,4 +5,5 @@ boto3
 requests
 apache-airflow-providers-ssh
 mlflow
-apache-airflow-providers-amazon==5.1.0
+apache-airflow-providers-amazon
+

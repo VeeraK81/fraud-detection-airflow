@@ -49,7 +49,7 @@ S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 S3_KEY = os.getenv("S3_KEY")
 
 # DAG configuration
-DAG_ID = 'fraud_detection_training_dag'
+DAG_ID = 'fd_data_consume_dag'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -127,7 +127,7 @@ with DAG(
             logging.error("No transaction data provided, aborting S3 upload.")
             return
 
-        s3_hook = S3Hook(aws_conn_id="aws_default")
+        s3_hook = S3Hook(aws_conn_id="aws_s3_default")
         
         try:
             # Step 1: Check if the CSV file already exists in S3

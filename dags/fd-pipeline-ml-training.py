@@ -40,7 +40,7 @@ if not all([JENKINS_URL, JENKINS_USER, JENKINS_TOKEN]):
     raise ValueError("Missing one or more Jenkins configuration environment variables")
 
 # DAG Configuration
-DAG_ID = 'jenkins_ec2_ml_training_dag'
+DAG_ID = 'fd_jenkins_ec2_training_dag'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,

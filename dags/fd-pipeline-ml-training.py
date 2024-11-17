@@ -36,6 +36,7 @@ AWS_ACCESS_KEY_ID= aws_access_key_id
 AWS_SECRET_ACCESS_KEY=aws_secret_access_key
 BUCKET_NAME = Variable.get("BUCKET_NAME")
 FILE_KEY = Variable.get("FILE_KEY")
+ARTIFACT_ROOT = Variable.get("ARTIFACT_ROOT")
 
 
 if not all([JENKINS_URL, JENKINS_USER, JENKINS_TOKEN]):
@@ -206,6 +207,7 @@ with DAG(
             export MLFLOW_EXPERIMENT_ID={MLFLOW_EXPERIMENT_ID}
             export AWS_ACCESS_KEY_ID={AWS_ACCESS_KEY_ID}
             export AWS_SECRET_ACCESS_KEY={AWS_SECRET_ACCESS_KEY}
+            export ARTIFACT_ROOT={ARTIFACT_ROOT}
             export BUCKET_NAME={BUCKET_NAME}
             export FILE_KEY={FILE_KEY}
             export PATH=$PATH:/home/ubuntu/.local/bin

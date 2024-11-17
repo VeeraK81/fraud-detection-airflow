@@ -19,9 +19,12 @@ USER root
 COPY ./dags /opt/airflow/dags
 
 # Use BuildKit to securely handle secrets
+# RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
+#     cat /run/secrets/SERVER_SECRETS > /tmp/ml-training-key && \
+#     echo "$(cat /tmp/ml-training-key)" > /opt/airflow/ml-training-key.pem
+
 RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
-    cat /run/secrets/SERVER_SECRETS > /tmp/ml-training-key && \
-    echo "$(cat /tmp/ml-training-key)" >> /opt/airflow/ml-training-key.pem
+    cat /run/secrets/SERVER_SECRETS > /opt/airflow/ml-training-key.pem
 
 # Initialize the Airflow database (PostgreSQL in this case)
 # IF YOU WANT TO HAVE THAT RUNNING IN HUGGINGFACE, YOU NEED TO HARD CODE THE VALUE HERE UNFORTUNATELY

@@ -4,7 +4,7 @@ numpy
 boto3
 requests
 apache-airflow-providers-ssh
-apache-airflow-providers-amazon==5.1.0
+apache-airflow-providers-amazon
 mlflow
 numpy
 cloudpickle==2.0.0

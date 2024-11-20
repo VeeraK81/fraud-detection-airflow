@@ -32,7 +32,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2024, 11, 18),
-    'retries': 1,
+    'retries': 2,
 }
 
 # Define the DAG

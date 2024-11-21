@@ -20,12 +20,6 @@ from airflow.models import Variable
 from airflow.models.dag import DAG
 import numpy as np
 
-
-# AWS_ACCESS_KEY_ID= aws_access_key_id
-# AWS_SECRET_ACCESS_KEY=aws_secret_access_key
-# S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-# S3_KEY = os.getenv("S3_KEY")
-
 # DAG configuration
 DAG_ID = 'fd_data_consume_dag'
 default_args = {
@@ -44,136 +38,6 @@ with DAG(
     catchup=False,
     tags=['fraud-detection-upload-s3'],
 ) as dag:
-
-#     @task
-#     def transaction_consume(**kwargs):
-#         """
-#         Fetch transaction data from the DAG run configuration.
-#         """
-#         config = kwargs.get('dag_run').conf
-#         transaction_data = config.get('transaction_data')
-        
-#         if transaction_data is None:
-#             logging.warning("No transaction data found in config. Please check dag_run.conf.")
-#         else:
-#             logging.info(f"Received transaction data: {transaction_data}")
-        
-#         return transaction_data
-
-#     # @task
-#     # def upload_or_append_to_s3(transaction_data):
-#     #     """
-#     #     Uploads transaction data to S3, appending to an existing file if present.
-#     #     """
-#     #     if not transaction_data:
-#     #         logging.error("No transaction data provided, aborting S3 upload.")
-#     #         return
-        
-#     #     s3_hook = S3Hook(aws_conn_id="aws_default")
-#     #     transaction_data_str = json.dumps(transaction_data)
-
-#     #     # Check if the file already exists in S3
-#     #     try:
-#     #         if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
-#     #             # Read existing data and append the new data
-#     #             existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-#     #             updated_data = existing_data + "\n" + transaction_data_str
-#     #             logging.info("Appending data to existing file in S3.")
-#     #         else:
-#     #             # If the file doesn't exist, use the new data as the file content
-#     #             updated_data = transaction_data_str
-#     #             logging.info("Creating new file in S3 with transaction data.")
-
-#     #         # Write the updated data back to S3
-#     #         s3_hook.load_string(
-#     #             string_data=updated_data,
-#     #             key=S3_KEY,
-#     #             bucket_name=S3_BUCKET_NAME,
-#     #             replace=True  # Overwrite existing file if it exists
-#     #         )
-#     #         logging.info(f"Data successfully uploaded to {S3_BUCKET_NAME}/{S3_KEY}")
-        
-#     #     except Exception as e:
-#     #         logging.error(f"Failed to upload data to S3: {str(e)}")
-#     #         raise
-#     @task
-#     def upload_or_append_to_s3(transaction_data):
-#         """
-#         Uploads transaction data to S3 in CSV format, appending to an existing file if present.
-#         """
-#         if not transaction_data:
-#             logging.error("No transaction data provided, aborting S3 upload.")
-#             return
-
-#         s3_hook = S3Hook(aws_conn_id="aws_s3_default")
-        
-#         try:
-#             # Step 1: Check if the CSV file already exists in S3
-#             csv_rows = []
-#             try:
-#                 if s3_hook.check_for_key(S3_KEY, bucket_name=S3_BUCKET_NAME):
-#                     # Read existing CSV data from S3
-#                     existing_data = s3_hook.read_key(S3_KEY, bucket_name=S3_BUCKET_NAME)
-#                     existing_csv = StringIO(existing_data)
-#                     reader = csv.reader(existing_csv)
-#                     csv_rows = list(reader)
-#                     logging.info("Appending data to existing CSV file in S3.")
-#                 else:
-#                     logging.info("Creating new CSV file in S3 with transaction data.")
-#             except Exception as e:
-#                 logging.error(f"Error reading existing CSV from S3: {str(e)}")
-#                 raise
-
-#             # Step 2: Prepare the transaction data as a row to append
-#             if not csv_rows:
-#                 # If CSV is empty or doesn't exist, add headers as the first row
-#                 csv_rows.append(transaction_data.keys())
-            
-#             # Append the transaction data as a new row
-#             csv_rows.append(transaction_data.values())
-
-#             # Step 3: Write the updated CSV data back to S3
-#             output = StringIO()
-#             writer = csv.writer(output)
-#             writer.writerows(csv_rows)
-            
-#             s3_hook.load_string(
-#                 string_data=output.getvalue(),
-#                 key=S3_KEY,
-#                 bucket_name=S3_BUCKET_NAME,
-#                 replace=True  # Overwrite the existing file
-#             )
-#             logging.info(f"Data successfully uploaded to {S3_BUCKET_NAME}/{S3_KEY}")
-
-#         except Exception as e:
-#             logging.error(f"Failed to upload data to S3: {str(e)}")
-#             raise
-
-#     # Define the task dependencies
-#     transaction_data = transaction_consume()
-#     upload_or_append_to_s3(transaction_data)
-
-
-
-
-
-
-
-
-# # Define default arguments
-# default_args = {
-#     'owner': 'airflow',
-#     'retries': 1,
-#     'start_date': datetime(2024, 11, 18),  # Set your start date
-# }
-
-# # Create the DAG
-# with DAG(
-#     'neon_postgres_connection_dag',
-#     default_args=default_args,
-#     schedule_interval=None,  # Change the schedule interval as per your need
-#     catchup=False,
-# ) as dag:
     
     # Your custom database URL (Neon Tech Postgres connection)
     @task
@@ -229,7 +93,7 @@ with DAG(
             # Convert data to a pandas DataFrame with appropriate columns
             df = pd.DataFrame(data, columns=["id","trans_date_trans_time","cc_num","merchant","category",
                                              "amt","first","last","gender","street","city","state","zip",
-                                             "lat","long","city_pop","job","dob","trans_num","unix_time","merch_lat","merch_long"])
+                                             "lat","long","city_pop","job","dob","trans_num","unix_time","merch_lat","merch_long", "is_fraud"])
             
             print("df :--", df.head())
 
@@ -377,6 +241,42 @@ with DAG(
         except Exception as e:
             logging.error(f"Failed to upload data to S3: {str(e)}")
             raise
+        
+    
+    
+    @task(trigger_rule=TriggerRule.ALL_SUCCESS)
+    def update_database_processed(**kwargs):
+        """
+        Update transaction data from the DAG run configuration.
+        """
+        config = kwargs.get('dag_run').conf
+        task_instance = kwargs['ti']
+        id = config.get('id')
+        trans_num = config.get('trans_num')
+        
+        # Fetch prediction results using XCom
+        prediction_results = task_instance.xcom_pull(task_ids='mlflow_predict')
+        
+        try:
+            # Use PostgresHook to connect to the Neon database
+            hook = PostgresHook(postgres_conn_id="postgres_neon")
+            conn = hook.get_conn()  # Get the connection object
+            cursor = conn.cursor()
+
+            # Sample query with the transaction ID
+            query = f"UPDATE transaction SET is_fraud = {prediction_results[0]} WHERE id={id} and trans_num='{trans_num}';"
+            
+            cursor.execute(query)
+            conn.commit()  # Commit the changes to the database
+            cursor.close()
+            
+            # Log the update
+            logging.info("Transaction updated successfully.")
+            
+        except Exception as e:
+            logging.error(f"Failed to update the database: {e}")
+            raise
+        
     
 
 
@@ -385,5 +285,6 @@ with DAG(
     prediction_results = mlflow_predict(query_task)
     process_task = process_result(query_task, prediction_results)  # Pass the result to the next task
     upload_s3 = upload_or_append_to_s3(process_task)
+    upload_transaction_postgres = update_database_processed()
 
-    query_task >> prediction_results >> process_task >> upload_s3
+    query_task >> prediction_results >> process_task >> upload_s3 >> upload_transaction_postgres

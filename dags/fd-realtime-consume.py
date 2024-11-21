@@ -194,8 +194,8 @@ with DAG(
         Uploads transaction data to S3 in CSV format, appending to an existing file if present.
         """
         
-        S3_KEY={S3_KEY}
-        S3_BUCKET_NAME={S3_BUCKET_NAME}
+        S3_KEY="fraud-detection-data/transaction-data.csv"
+        S3_BUCKET_NAME="flow-bucket-ml"
         
         
         if not transaction_data:

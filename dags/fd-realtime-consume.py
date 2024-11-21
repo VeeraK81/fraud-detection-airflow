@@ -20,6 +20,12 @@ from airflow.models import Variable
 from airflow.models.dag import DAG
 import numpy as np
 
+
+MODEL_URI = Variable.get("MODEL_URI")
+S3_KEY=Variable.get("S3_KEY")
+S3_BUCKET_NAME=Variable.get("S3_BUCKET_NAME")
+
+
 # DAG configuration
 DAG_ID = 'fd_data_consume_dag'
 default_args = {
@@ -119,13 +125,11 @@ with DAG(
             aws_access_key_id, aws_secret_access_key = s3_hook.get_credentials().access_key, s3_hook.get_credentials().secret_key
 
             # Set environment variables for MLflow to use
-            import os
             os.environ['AWS_ACCESS_KEY_ID'] = aws_access_key_id
             os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
-            # os.environ['AWS_DEFAULT_REGION'] = 'your-region'  # Specify your region here if needed
 
             # Use the S3 model URI pointing to your specific model
-            model_uri = "s3://flow-bucket-ml/training-models/3/4f6b131867bd484e88de2234eb15e868/artifacts/fraud_detection_model/"
+            model_uri ={MODEL_URI}
             model = mlflow.pyfunc.load_model(model_uri)
             # Get the dependencies of the model
             model_dependencies = mlflow.pyfunc.get_model_dependencies(model_uri)
@@ -190,8 +194,8 @@ with DAG(
         Uploads transaction data to S3 in CSV format, appending to an existing file if present.
         """
         
-        S3_KEY="fraud-detection-data/transaction-data.csv"
-        S3_BUCKET_NAME="flow-bucket-ml"
+        S3_KEY={S3_KEY}
+        S3_BUCKET_NAME={S3_BUCKET_NAME}
         
         
         if not transaction_data:
@@ -217,10 +221,6 @@ with DAG(
                 logging.error(f"Error reading existing CSV from S3: {str(e)}")
                 raise
 
-            # Step 2: Prepare the transaction data as a row to append
-            # if not csv_rows:
-                # If CSV is empty or doesn't exist, add headers as the first row
-                # csv_rows.append(transaction_data.keys())
             
             # Append the transaction data as a new row
             csv_rows.append(transaction_data)

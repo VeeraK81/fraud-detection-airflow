@@ -7,6 +7,7 @@ from airflow.models.dag import DAG
 from airflow.hooks.base import BaseHook
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.models import Variable
+import os
 
 # Fetch AWS credentials from Airflow connection
 aws_conn = BaseHook.get_connection('aws_default')
@@ -56,14 +57,24 @@ with DAG(
             # Initialize S3 Hook
             s3_hook = S3Hook(aws_conn_id='aws_default')
             
-            # Download the file from S3
+            # Local directory where the file should be downloaded
+            local_directory = LOCAL_FILE_PATH  # Ensure this is a directory path, e.g., '/tmp/'
+            file_name = "cv_results.csv"  # The name of the file you want to download
+            
+            # Ensure the local directory exists
+            os.makedirs(local_directory, exist_ok=True)
+
+            # Full path to save the downloaded file
+            local_file_path = os.path.join(local_directory, file_name)
+
+            # Download the file from S3 to the local path
             s3_hook.download_file(
                 key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=LOCAL_FILE_PATH
+                local_path=local_directory
             )
             
-            print(f"File downloaded from S3 and saved to {LOCAL_FILE_PATH}")
+            print(f"File downloaded from S3 and saved to {local_file_path}")
 
         except Exception as e:
             print(f"Error occurred during S3 file download: {str(e)}")

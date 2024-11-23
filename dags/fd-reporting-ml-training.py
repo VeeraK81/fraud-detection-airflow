@@ -67,11 +67,11 @@ with DAG(
             # Full path to save the downloaded file
             local_file_path = os.path.join(local_directory, file_name)
 
-            # Download the file from S3 to the local path (local_file_path now includes the full path)
+            # Download the file from S3 to the local path
             s3_hook.download_file(
                 key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=local_file_path  # Provide the full path (directory + filename)
+                local_path=local_directory
             )
             
             print(f"File downloaded from S3 and saved to {local_file_path}")
@@ -84,10 +84,10 @@ with DAG(
     def send_data_to_evidently_cloud():
         """Send ML training data to Evidently AI Cloud Workspace."""
         try:
-            file_name = "cv_results.csv"
-            path_file = os.path.join(LOCAL_FILE_PATH, file_name)
+            # file_name = "cv_results.csv"
+            # path_file = os.path.join(LOCAL_FILE_PATH, file_name)
             # Load the training data from the downloaded file
-            data = pd.read_csv(path_file)
+            data = pd.read_csv('/tmp/cv_results.csv')
             
             # Convert the DataFrame to a JSON format
             data_json = data.to_json(orient="records")

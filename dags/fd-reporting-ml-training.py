@@ -1,67 +1,34 @@
 import boto3
-import time
+import pandas as pd
+import requests
 from datetime import datetime
 from airflow.decorators import task
 from airflow.models.dag import DAG
-
 from airflow.hooks.base import BaseHook
-from airflow.utils.trigger_rule import TriggerRule
-from airflow.models import Variable
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-import pandas as pd
-from evidently.ui.workspace.cloud import CloudWorkspace
+from airflow.models import Variable
 
-from evidently.report import Report
-
-from evidently import metrics
-from evidently.metric_preset import DataQualityPreset
-from evidently.metric_preset import DataDriftPreset
-
-from evidently.test_suite import TestSuite
-from evidently.tests import *
-from evidently.test_preset import DataDriftTestPreset
-from evidently.tests.base_test import TestResult, TestStatus
-from evidently.ui.dashboards import DashboardPanelPlot
-from evidently.ui.dashboards import DashboardPanelTestSuite
-from evidently.ui.dashboards import PanelValue
-from evidently.ui.dashboards import PlotType
-from evidently.ui.dashboards import ReportFilter
-from evidently.ui.dashboards import TestFilter
-from evidently.ui.dashboards import TestSuitePanelType
-from evidently.renderers.html_widgets import WidgetSize
-
-
-aws_conn = BaseHook.get_connection('aws_default')  # Use the Airflow AWS connection
+# Fetch AWS credentials from Airflow connection
+aws_conn = BaseHook.get_connection('aws_default')
 aws_access_key_id = aws_conn.login
 aws_secret_access_key = aws_conn.password
-region_name = aws_conn.extra_dejson.get('region_name', 'eu-west-3')  # Default to 'eu-west-3'
+region_name = aws_conn.extra_dejson.get('region_name', 'eu-west-3')
 
-
-AWS_ACCESS_KEY_ID= aws_access_key_id
-AWS_SECRET_ACCESS_KEY=aws_secret_access_key
+# Constants and Variables for your DAG
 BUCKET_NAME = Variable.get("BUCKET_NAME")
-FILE_KEY = Variable.get("FILE_KEY")
-ARTIFACT_ROOT = Variable.get("ARTIFACT_ROOT")
-
-
-# # Define constants for Evidently configuration
-# EVIDENTLY_BASE_URL = "https://api.evidentlyai.cloud"
-# EVIDENTLY_PROJECT_ID = "019358ac-77c0-7138-a389-4ce4de470692"
-
-# # S3 Bucket and Key Details (Updated for cv_results.csv)
-# RESULT_FILE_KEY = "training-models/3/76a94082e1884f68b2a7f63d61424109/artifacts/cv_results.csv"
-# LOCAL_FILE_PATH = "/tmp/cv_results.csv"  # Temp location to save file from S3
-
-# Define constants for Evidently configuration
-EVIDENTLY_BASE_URL = Variable.get("EVIDENTLY_BASE_URL")
-EVIDENTLY_PROJECT_ID = Variable.get("EVIDENTLY_PROJECT_ID")
-EVIDENTLY_API_TOKEN = Variable.get("EVIDENTLY_API_TOKEN")
-
-# S3 Bucket and Key Details (Updated for cv_results.csv)
 RESULT_FILE_KEY = Variable.get("RESULT_FILE_KEY")
 LOCAL_FILE_PATH = Variable.get("LOCAL_FILE_PATH")
 
+# Evidently Cloud Configuration
+EVIDENTLY_API_TOKEN = Variable.get("EVIDENTLY_API_TOKEN")
+EVIDENTLY_BASE_URL = Variable.get("EVIDENTLY_BASE_URL")
+EVIDENTLY_PROJECT_ID = Variable.get("EVIDENTLY_PROJECT_ID")
 
+# Headers for authentication
+headers = {
+    "Authorization": f"Bearer {EVIDENTLY_API_TOKEN}",
+    "Content-Type": "application/json"
+}
 
 # DAG Configuration
 DAG_ID = 'fd_training_data_reporting'
@@ -103,49 +70,34 @@ with DAG(
             raise
 
     @task
-    def generate_and_upload_report():
-        """Generate Evidently report and send it to the Evidently Cloud."""
+    def send_data_to_evidently_cloud():
+        """Send ML training data to Evidently AI Cloud Workspace."""
         try:
             # Load the training data from the downloaded file
             data = pd.read_csv(LOCAL_FILE_PATH)
             
-            # Set up Evidently Cloud Workspace
-            workspace = CloudWorkspace(
-                base_url=EVIDENTLY_BASE_URL,
-                api_token=EVIDENTLY_API_TOKEN,
-                workspace_id=EVIDENTLY_PROJECT_ID
-            )
+            # Convert the DataFrame to a JSON format
+            data_json = data.to_json(orient="records")
 
-            # Initialize report with metrics you want
-            report = Report(metrics=[DataQualityPreset(), DataDriftPreset()])
+            # Construct the API endpoint for uploading data
+            upload_data_url = f"{EVIDENTLY_BASE_URL}/projects/{EVIDENTLY_PROJECT_ID}/datasets"
 
-            # Calculate report using the data (assuming current data is the same as reference)
-            report.run(reference_data=data, current_data=data)
+            # Send the data to Evidently Cloud
+            response = requests.post(upload_data_url, headers=headers, json={"data": data_json, "dataset_name": "cv_results_data"})
 
-            # Generate a report as an HTML or JSON file locally
-            report_path = "/tmp/evidently_report.html"
-            report.save_html(report_path)
-            
-            print(f"Evidently report generated and saved to {report_path}")
-
-            # Optionally, upload the report back to S3 or handle it further
-            s3_hook = S3Hook(aws_conn_id='aws_default')
-            report_key = "reports/evidently_report.html"
-            s3_hook.load_file(
-                filename=report_path,
-                key=report_key,
-                bucket_name=BUCKET_NAME,
-                replace=True
-            )
-            print(f"Report uploaded to S3 bucket {BUCKET_NAME} with key {report_key}")
+            # Check the response status
+            if response.status_code == 200:
+                print("Data successfully sent to Evidently AI Cloud!")
+            else:
+                print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
 
         except Exception as e:
-            print(f"Error occurred while generating Evidently report: {str(e)}")
+            print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
             raise
         
     # Define task dependencies
     download_task = download_data_from_s3()
-    reporting_task = generate_and_upload_report()
+    reporting_task = send_data_to_evidently_cloud()
 
     # Ensure tasks run in the correct order
     download_task >> reporting_task

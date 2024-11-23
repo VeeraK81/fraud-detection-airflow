@@ -71,7 +71,7 @@ with DAG(
             s3_hook.download_file(
                 key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=local_directory
+                local_path=local_file_path
             )
             
             print(f"File downloaded from S3 and saved to {local_file_path}")

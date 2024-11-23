@@ -10,7 +10,6 @@ from airflow.models import Variable
 import os
 from evidently.ui.workspace.cloud import CloudWorkspace
 from evidently.report import Report
-from evidently.metric_preset import DataDriftPresetsss
 
 
 

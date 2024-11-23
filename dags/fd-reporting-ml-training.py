@@ -8,6 +8,10 @@ from airflow.hooks.base import BaseHook
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.models import Variable
 import os
+from evidently.ui.workspace.cloud import CloudWorkspace
+from evidently.report import Report
+from evidently.metric_preset import DataDriftPresetsss
+
 
 
 # Fetch AWS credentials from Airflow connection
@@ -94,18 +98,19 @@ with DAG(
              # Convert the DataFrame to a JSON format
             data_json = data.to_json(orient="records")
 
-            # Construct the API endpoint for uploading data
-            upload_data_url = f"{EVIDENTLY_BASE_URL}/projects/{EVIDENTLY_PROJECT_ID}/datasets"
+            
+            ws = CloudWorkspace(
+            token=EVIDENTLY_API_TOKEN,
+            url="https://app.evidently.cloud")
 
-            # Send the data to Evidently Cloud
-            response = requests.post(upload_data_url, json={"data": data_json, "dataset_name": "cv_results_data"})
+            project = ws.get_project(EVIDENTLY_PROJECT_ID)
+            
+            project.send_data(
+                data_json=data_json,
+                dataset_name="cv_results_data"
+            )
+            print("Data successfully sent to Evidently AI Cloud!")
 
-            # Check the response status
-            if response.status_code == 200:
-                print("Data successfully sent to Evidently AI Cloud!")
-            else:
-                print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
-        
         except Exception as e:
             print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
             raise e

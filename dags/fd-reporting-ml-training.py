@@ -88,7 +88,7 @@ with DAG(
         print("filename", filename)
         try:
             # Load the training data from the downloaded file
-            data = pd.read_csv(LOCAL_FILE_PATH)
+            data = pd.read_csv(filename)
             print(data.head())
             
              # Convert the DataFrame to a JSON format

@@ -9,26 +9,6 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.models import Variable
 import os
 
-from evidently.ui.workspace.cloud import CloudWorkspace
-
-from evidently.report import Report
-
-from evidently import metrics
-from evidently.metric_preset import DataQualityPreset
-from evidently.metric_preset import DataDriftPreset
-
-from evidently.test_suite import TestSuite
-from evidently.tests import *
-from evidently.test_preset import DataDriftTestPreset
-from evidently.tests.base_test import TestResult, TestStatus
-from evidently.ui.dashboards import DashboardPanelPlot
-from evidently.ui.dashboards import DashboardPanelTestSuite
-from evidently.ui.dashboards import PanelValue
-from evidently.ui.dashboards import PlotType
-from evidently.ui.dashboards import ReportFilter
-from evidently.ui.dashboards import TestFilter
-from evidently.ui.dashboards import TestSuitePanelType
-from evidently.renderers.html_widgets import WidgetSize
 
 # Fetch AWS credentials from Airflow connection
 aws_conn = BaseHook.get_connection('aws_default')

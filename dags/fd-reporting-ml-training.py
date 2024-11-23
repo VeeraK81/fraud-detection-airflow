@@ -56,22 +56,15 @@ with DAG(
         try:
             # Initialize S3 Hook
             s3_hook = S3Hook(aws_conn_id='aws_default')
-            
-            # Local directory where the file should be downloaded
-            local_directory = LOCAL_FILE_PATH  # Ensure this is a directory path, e.g., '/tmp/'
-            file_name = "cv_results.csv"  # The name of the file you want to download
-            
-            # Ensure the local directory exists
-            os.makedirs(local_directory, exist_ok=True)
 
             # Full path to save the downloaded file
-            local_file_path = os.path.join(local_directory, file_name)
+            local_file_path = LOCAL_FILE_PATH  # Ensure this is a full path, like '/tmp/cv_results.csv'
 
-            # Download the file from S3 to the local path
+            # Download the file from S3 directly to the specified file path
             s3_hook.download_file(
                 key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=local_directory
+                local_path=local_file_path
             )
             
             print(f"File downloaded from S3 and saved to {local_file_path}")
@@ -79,6 +72,7 @@ with DAG(
         except Exception as e:
             print(f"Error occurred during S3 file download: {str(e)}")
             raise
+
 
     @task
     def send_data_to_evidently_cloud():

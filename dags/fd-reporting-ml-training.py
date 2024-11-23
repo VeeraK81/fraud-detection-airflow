@@ -56,17 +56,24 @@ with DAG(
     def download_data_from_s3():
         """Download the cv_results.csv file from S3."""
         try:
-            # Initialize S3 Hook
-            s3_hook = S3Hook('aws_default')
+            # Define local directory path
+            local_dir = "/tmp"
+            file_name = "cv_results.csv"
+            local_file_path = os.path.join(local_dir, file_name)
+
+            # Make sure the /tmp directory exists
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)
+
+            # Create an S3 hook
+            s3_hook = S3Hook(aws_conn_id="aws_default")
             
-            # Download the file from S3
+            # Download file from S3
             filename = s3_hook.download_file(
-                key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=LOCAL_FILE_PATH
+                key=RESULT_FILE_KEY,  # Correct S3 path
+                local_path=local_file_path
             )
-            
-            print(f"File downloaded from S3 {filename} and saved to {LOCAL_FILE_PATH}")
             return filename
 
         except Exception as e:
@@ -77,6 +84,8 @@ with DAG(
     @task
     def generate_and_upload_report(filename):
         """Generate Evidently report and send it to the Evidently Cloud."""
+        
+        print("filename", filename)
         try:
             # Load the training data from the downloaded file
             data = pd.read_csv(LOCAL_FILE_PATH)

@@ -73,6 +73,7 @@ with DAG(
                 bucket_name=BUCKET_NAME,
                 key=RESULT_FILE_KEY  # Correct S3 path
             )
+            print("filename", filename)
             return filename
 
         except Exception as e:

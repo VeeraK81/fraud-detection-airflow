@@ -102,39 +102,25 @@ with DAG(
             data = pd.read_csv(LOCAL_FILE_PATH)
             print(data.head())
             
-            # Set up Evidently Cloud Workspace
-            workspace = CloudWorkspace(
-                base_url=EVIDENTLY_BASE_URL,
-                api_token=EVIDENTLY_API_TOKEN,
-                workspace_id=EVIDENTLY_PROJECT_ID
-            )
+             # Convert the DataFrame to a JSON format
+            data_json = data.to_json(orient="records")
 
-            # Initialize report with metrics you want
-            report = Report(metrics=[DataQualityPreset(), DataDriftPreset()])
+            # Construct the API endpoint for uploading data
+            upload_data_url = f"{EVIDENTLY_BASE_URL}/projects/{EVIDENTLY_PROJECT_ID}/datasets"
 
-            # Calculate report using the data (assuming current data is the same as reference)
-            report.run(reference_data=data, current_data=data)
+            # Send the data to Evidently Cloud
+            response = requests.post(upload_data_url, json={"data": data_json, "dataset_name": "cv_results_data"})
 
-            # Generate a report as an HTML or JSON file locally
-            report_path = "/tmp/evidently_report.html"
-            report.save_html(report_path)
-            
-            print(f"Evidently report generated and saved to {report_path}")
-
-            # Optionally, upload the report back to S3 or handle it further
-            s3_hook = S3Hook(aws_conn_id='aws_default')
-            report_key = "reports/evidently_report.html"
-            s3_hook.load_file(
-                filename=report_path,
-                key=report_key,
-                bucket_name=BUCKET_NAME,
-                replace=True
-            )
-            print(f"Report uploaded to S3 bucket {BUCKET_NAME} with key {report_key}")
-
+            # Check the response status
+            if response.status_code == 200:
+                print("Data successfully sent to Evidently AI Cloud!")
+            else:
+                print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
+        
         except Exception as e:
-            print(f"Error occurred while generating Evidently report: {str(e)}")
-            raise
+            print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
+            raise e
+
         
     # Define task dependencies
     download_task = download_data_from_s3()

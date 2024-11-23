@@ -84,8 +84,10 @@ with DAG(
     def send_data_to_evidently_cloud():
         """Send ML training data to Evidently AI Cloud Workspace."""
         try:
+            file_name = "cv_results.csv"
+            path_file = os.path.join(LOCAL_FILE_PATH, file_name)
             # Load the training data from the downloaded file
-            data = pd.read_csv(LOCAL_FILE_PATH)
+            data = pd.read_csv(path_file)
             
             # Convert the DataFrame to a JSON format
             data_json = data.to_json(orient="records")

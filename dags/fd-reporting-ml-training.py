@@ -52,80 +52,67 @@ with DAG(
     
     @task
     def download_and_send_data():
-        """Download the file from S3 and send it to Evidently AI Cloud."""
+        """Download data from S3 and send to Evidently Cloud"""
         try:
-            # Step 1: Download the file from S3
-            s3_hook = S3Hook(aws_conn_id='aws_default')
+            # Define local directory path
+            local_dir = "/tmp"
+            file_name = "cv_results.csv"
+            local_file_path = os.path.join(local_dir, file_name)
 
-            # Ensure the local directory exists
-            os.makedirs(LOCAL_FILE_PATH, exist_ok=True)
+            # Make sure the /tmp directory exists
+            if not os.path.exists(local_dir):
+                os.makedirs(local_dir)
 
-            # Full path to save the downloaded file
-            local_file_path = os.path.join(LOCAL_FILE_PATH, 'cv_results.csv')
-
-            # Download the file from S3 to the local path
+            # Create an S3 hook
+            s3_hook = S3Hook(aws_conn_id=AWS_CONNECTION_ID)
+            
+            # Download file from S3
             s3_hook.download_file(
-                key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
+                key=RESULT_FILE_KEY,  # Correct S3 path
                 local_path=local_file_path
             )
+            
+            print(f"File downloaded successfully to {local_file_path}")
+            
+            # Now send the data to Evidently Cloud
+            send_data_to_evidently_cloud(local_file_path)
+            
+        except Exception as e:
+            print(f"Error occurred while downloading or sending data: {str(e)}")
+            raise e
 
-            print(f"File downloaded from S3 and saved to {local_file_path}")
-
-            # Step 2: Load the CSV data into a pandas DataFrame
-            data = pd.read_csv(local_file_path)
+    @task
+    def send_data_to_evidently_cloud(file_path: str):
+        """Send data to Evidently AI Cloud Workspace"""
+        try:
+            # Load the training data from the downloaded file
+            data = pd.read_csv(file_path)
 
             # Convert the DataFrame to a JSON format
             data_json = data.to_json(orient="records")
 
-            # Step 3: Send the data to Evidently Cloud
+            # Construct the API endpoint for uploading data
             upload_data_url = f"{EVIDENTLY_BASE_URL}/projects/{EVIDENTLY_PROJECT_ID}/datasets"
-            response = requests.post(upload_data_url, headers=headers, json={"data": data_json, "dataset_name": "cv_results_data"})
 
-            # Step 4: Check the response from Evidently
+            # Send the data to Evidently Cloud
+            response = requests.post(upload_data_url, json={"data": data_json, "dataset_name": "cv_results_data"})
+
+            # Check the response status
             if response.status_code == 200:
                 print("Data successfully sent to Evidently AI Cloud!")
             else:
                 print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
-
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            raise
-
-    # Execute the combined task
-    download_and_send_data()
-
-    # @task
-    # def send_data_to_evidently_cloud(local_file_path):
-    #     """Send ML training data to Evidently AI Cloud Workspace."""
-    #     try:
-    #         # file_name = "cv_results.csv"
-    #         # path_file = os.path.join(LOCAL_FILE_PATH, file_name)
-    #         # Load the training data from the downloaded file
-    #         data = pd.read_csv(local_file_path)
             
-    #         # Convert the DataFrame to a JSON format
-    #         data_json = data.to_json(orient="records")
+        except Exception as e:
+            print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
+            raise e
 
-    #         # Construct the API endpoint for uploading data
-    #         upload_data_url = f"{EVIDENTLY_BASE_URL}/projects/{EVIDENTLY_PROJECT_ID}/datasets"
-
-    #         # Send the data to Evidently Cloud
-    #         response = requests.post(upload_data_url, headers=headers, json={"data": data_json, "dataset_name": "cv_results_data"})
-
-    #         # Check the response status
-    #         if response.status_code == 200:
-    #             print("Data successfully sent to Evidently AI Cloud!")
-    #         else:
-    #             print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
-
-    #     except Exception as e:
-    #         print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
-    #         raise
-        
-    # # Define task dependencies
-    # download_task = download_data_from_s3()
-    # # reporting_task = send_data_to_evidently_cloud(download_task)
-
-    # # Ensure tasks run in the correct order
-    # download_task 
+    # Define the DAG
+    with DAG(
+        'fd_training_data_reporting',
+        default_args={'owner': 'airflow', 'start_date': datetime(2024, 11, 23)},
+        schedule_interval=None,  # Or any appropriate schedule
+        catchup=False,
+    ) as dag:
+        download_and_send_data()

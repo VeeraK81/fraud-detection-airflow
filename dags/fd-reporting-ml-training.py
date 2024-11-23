@@ -67,11 +67,11 @@ with DAG(
             # Full path to save the downloaded file
             local_file_path = os.path.join(local_directory, file_name)
 
-            # Download the file from S3 to the local path
+            # Download the file from S3 to the local path (local_file_path now includes the full path)
             s3_hook.download_file(
                 key=RESULT_FILE_KEY,
                 bucket_name=BUCKET_NAME,
-                local_path=local_directory
+                local_path=local_file_path  # Provide the full path (directory + filename)
             )
             
             print(f"File downloaded from S3 and saved to {local_file_path}")

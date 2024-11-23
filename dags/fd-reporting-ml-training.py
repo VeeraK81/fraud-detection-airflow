@@ -51,21 +51,17 @@ with DAG(
 ) as dag:
     
     @task
-    def download_data_from_s3():
-        """Download the cv_results.csv file from S3."""
+    def download_and_send_data():
+        """Download the file from S3 and send it to Evidently AI Cloud."""
         try:
-            # Initialize S3 Hook
+            # Step 1: Download the file from S3
             s3_hook = S3Hook(aws_conn_id='aws_default')
-            
-            # Local directory where the file should be downloaded
-            local_directory = LOCAL_FILE_PATH  # Ensure this is a directory path, e.g., '/tmp/'
-            file_name = "cv_results.csv"  # The name of the file you want to download
-            
+
             # Ensure the local directory exists
-            os.makedirs(local_directory, exist_ok=True)
+            os.makedirs(LOCAL_FILE_PATH, exist_ok=True)
 
             # Full path to save the downloaded file
-            local_file_path = os.path.join(local_directory, file_name)
+            local_file_path = os.path.join(LOCAL_FILE_PATH, 'cv_results.csv')
 
             # Download the file from S3 to the local path
             s3_hook.download_file(
@@ -73,10 +69,10 @@ with DAG(
                 bucket_name=BUCKET_NAME,
                 local_path=local_file_path
             )
-            
+
             print(f"File downloaded from S3 and saved to {local_file_path}")
-                    # Push the file path to XCom
-            # return local_file_path  # This will be pushed to XCom automatically
+
+            # Step 2: Load the CSV data into a pandas DataFrame
             data = pd.read_csv(local_file_path)
 
             # Convert the DataFrame to a JSON format
@@ -92,10 +88,12 @@ with DAG(
             else:
                 print(f"Failed to send data to Evidently. Status code: {response.status_code}, Response: {response.text}")
 
-
         except Exception as e:
-            print(f"Error occurred during S3 file download: {str(e)}")
+            print(f"Error occurred: {str(e)}")
             raise
+
+    # Execute the combined task
+    download_and_send_data()
 
     # @task
     # def send_data_to_evidently_cloud(local_file_path):
@@ -125,9 +123,9 @@ with DAG(
     #         print(f"Error occurred while sending data to Evidently Cloud: {str(e)}")
     #         raise
         
-    # Define task dependencies
-    download_task = download_data_from_s3()
-    # reporting_task = send_data_to_evidently_cloud(download_task)
+    # # Define task dependencies
+    # download_task = download_data_from_s3()
+    # # reporting_task = send_data_to_evidently_cloud(download_task)
 
-    # Ensure tasks run in the correct order
-    download_task 
+    # # Ensure tasks run in the correct order
+    # download_task 

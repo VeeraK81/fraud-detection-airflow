@@ -71,8 +71,7 @@ with DAG(
             # Download file from S3
             filename = s3_hook.download_file(
                 bucket_name=BUCKET_NAME,
-                key=RESULT_FILE_KEY,  # Correct S3 path
-                local_path=local_file_path
+                key=RESULT_FILE_KEY  # Correct S3 path
             )
             return filename
 

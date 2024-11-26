@@ -37,6 +37,7 @@ AWS_SECRET_ACCESS_KEY=aws_secret_access_key
 BUCKET_NAME = Variable.get("BUCKET_NAME")
 FILE_KEY = Variable.get("FILE_KEY")
 ARTIFACT_ROOT = Variable.get("ARTIFACT_ROOT")
+BACKEND_STORE_URI = Variable.get("BACKEND_STORE_URI")
 
 
 if not all([JENKINS_URL, JENKINS_USER, JENKINS_TOKEN]):
@@ -210,6 +211,7 @@ with DAG(
             export ARTIFACT_ROOT={ARTIFACT_ROOT}
             export BUCKET_NAME={BUCKET_NAME}
             export FILE_KEY={FILE_KEY}
+            export BACKEND_STORE_URI={BACKEND_STORE_URI}
             export PATH=$PATH:/home/ubuntu/.local/bin
             mlflow run https://github.com/VeeraK81/pipeline-workflow --build-image    
             """

@@ -37,7 +37,12 @@ RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment
 
+# RUN --mount=type=secret,id=MLFLOW_BACKEND_STORE,mode=0444 \
+#     cat /run/secrets/MLFLOW_BACKEND_STORE > /tmp/MLFLOW_BACKEND_STORE && \
+#     echo "BACKEND_STORE_URI=$(cat /tmp/MLFLOW_BACKEND_STORE)" >> /etc/environment
+
 RUN rm /tmp/POSTGRES_URL
+RUN rm /tmp/MLFLOW_BACKEND_STORE
 
 RUN usermod -u 1000 airflow
 
@@ -49,6 +54,7 @@ USER airflow
 
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 ENV S3_KEY=$S3_KEY
+ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt

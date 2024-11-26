@@ -42,7 +42,7 @@ RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
 #     echo "BACKEND_STORE_URI=$(cat /tmp/MLFLOW_BACKEND_STORE)" >> /etc/environment
 
 RUN rm /tmp/POSTGRES_URL
-RUN rm /tmp/MLFLOW_BACKEND_STORE
+# RUN rm /tmp/MLFLOW_BACKEND_STORE
 
 RUN usermod -u 1000 airflow
 

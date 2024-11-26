@@ -11,6 +11,7 @@ from airflow.hooks.base import BaseHook
 import paramiko
 from airflow.utils.trigger_rule import TriggerRule
 from airflow.models import Variable
+import os
 
 # Jenkins Configuration: Load from Airflow Variables
 JENKINS_URL = Variable.get("JENKINS_URL")
@@ -37,7 +38,7 @@ AWS_SECRET_ACCESS_KEY=aws_secret_access_key
 BUCKET_NAME = Variable.get("BUCKET_NAME")
 FILE_KEY = Variable.get("FILE_KEY")
 ARTIFACT_ROOT = Variable.get("ARTIFACT_ROOT")
-BACKEND_STORE_URI = Variable.get("BACKEND_STORE_URI")
+BACKEND_STORE_URI = os.getenv("BACKEND_STORE_URI")
 
 
 if not all([JENKINS_URL, JENKINS_USER, JENKINS_TOKEN]):

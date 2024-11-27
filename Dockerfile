@@ -37,7 +37,7 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 #     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
 #     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment    
 
-RUN rm /tmp/POSTGRES_URL
+# RUN rm /tmp/POSTGRES_URL
 # # RUN rm /tmp/MLFLOW_BACKEND_STORE
 
 RUN usermod -u 1000 airflow

@@ -33,9 +33,9 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # IF YOU STAGE THAT IN HUGGING FACE SPACE, YOU DON'T HAVE A CHOICE THOUGH
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETS
-RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
-    cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
-    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment    
+# RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
+#     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
+#     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment    
 
 RUN rm /tmp/POSTGRES_URL
 # # RUN rm /tmp/MLFLOW_BACKEND_STORE
@@ -51,6 +51,7 @@ USER airflow
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 ENV S3_KEY=$S3_KEY
 ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$POSTGRES_URL
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt
@@ -70,12 +71,6 @@ RUN airflow users create \
    --role Admin \
    --email admin@example.com \
    --password admin
-
-# Add entrypoint script to source /etc/environment at runtime
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
 
 # Expose the necessary ports (optional if Hugging Face already handles port exposure)
 EXPOSE 7860

@@ -81,6 +81,8 @@ with DAG(
 
         # Step 2: Poll the latest build's status
         build_url = f"{JENKINS_URL}/job/{JENKINS_JOB_NAME}/{latest_build_number}/api/json"
+        
+        print("psURL:", os.getenv('POSTGRES_URL'))
 
         while True:
             response = requests.get(build_url, auth=(JENKINS_USER, JENKINS_TOKEN))

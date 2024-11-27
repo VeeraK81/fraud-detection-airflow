@@ -11,7 +11,7 @@ ENV AIRFLOW__WEBSERVER__WEB_SERVER_PORT=7860
 ENV AWS_DEFAULT_REGION=eu-west-3
 ENV AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
 ENV AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX=True
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql://${PS_USER}:${PS_PWD}@ep-wandering-hat-a25hgllw.eu-central-1.aws.neon.tech/airflowdb?sslmode=require&options=-csearch_path=airflow
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="postgresql://${PS_USER}:${PS_PWD}@ep-wandering-hat-a25hgllw.eu-central-1.aws.neon.tech/airflowdb?sslmode=require&options=-csearch_path=airflow"
 
 # Switch user
 USER root

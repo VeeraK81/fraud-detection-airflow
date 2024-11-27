@@ -68,7 +68,8 @@ RUN airflow users create \
    --email admin@example.com \
    --password admin
 
-
+USER root
+RUN chmod 644 entrypoint.sh
 # Add entrypoint script to source /etc/environment at runtime
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

@@ -51,6 +51,7 @@ USER airflow
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 ENV S3_KEY=$S3_KEY
 ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$POSTGRES_URL
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt

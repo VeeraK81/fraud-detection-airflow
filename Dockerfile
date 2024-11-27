@@ -69,7 +69,13 @@ RUN airflow users create \
    --password admin
 
 USER root
-RUN chmod 644 entrypoint.sh
+
+# Copy entrypoint script and ensure correct permissions
+COPY --chown=root:root entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+USER airflow
+   
 # Add entrypoint script to source /etc/environment at runtime
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

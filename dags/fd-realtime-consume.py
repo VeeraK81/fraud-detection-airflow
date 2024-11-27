@@ -119,7 +119,7 @@ with DAG(
 
         try:
             # Retrieve AWS credentials from the aws_s3_default connection using S3Hook
-            s3_hook = S3Hook(aws_conn_id='aws_s3_default')
+            s3_hook = S3Hook(aws_conn_id='aws_default')
 
             # Set up environment variables for AWS credentials from the connection
             aws_access_key_id, aws_secret_access_key = s3_hook.get_credentials().access_key, s3_hook.get_credentials().secret_key

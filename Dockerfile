@@ -11,7 +11,6 @@ ENV AIRFLOW__WEBSERVER__WEB_SERVER_PORT=7860
 ENV AWS_DEFAULT_REGION=eu-west-3
 ENV AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
 ENV AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX=True
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="postgresql://${PS_USER}:${PS_PWD}@ep-wandering-hat-a25hgllw.eu-central-1.aws.neon.tech/airflowdb?sslmode=require&options=-csearch_path=airflow"
 
 # Switch user
 USER root
@@ -34,11 +33,13 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # IF YOU STAGE THAT IN HUGGING FACE SPACE, YOU DON'T HAVE A CHOICE THOUGH
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETS
-# RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
-#     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
-#     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment
+RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
+    cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
+    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment
 
-# RUN rm /tmp/POSTGRES_URL
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$POSTGRES_URL
+
+RUN rm /tmp/POSTGRES_URL
 # RUN rm /tmp/MLFLOW_BACKEND_STORE
 
 RUN usermod -u 1000 airflow

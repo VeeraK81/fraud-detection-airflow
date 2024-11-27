@@ -9,7 +9,7 @@ ENV AIRFLOW__WEBSERVER__WEB_SERVER_MASTER_TIMEOUT=300
 ENV AIRFLOW__WEBSERVER__WORKER_CLASS=gevent
 ENV AIRFLOW__WEBSERVER__WEB_SERVER_PORT=7860
 ENV AWS_DEFAULT_REGION=eu-west-3
-# ENV AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
+ENV AIRFLOW__API__AUTH_BACKEND=airflow.api.auth.backend.basic_auth
 ENV AIRFLOW__WEBSERVER__ENABLE_PROXY_FIX=True
 
 # Switch user
@@ -51,12 +51,14 @@ USER airflow
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 ENV S3_KEY=$S3_KEY
 ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$POSTGRES_URL
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt
 
+RUN pip install --upgrade pip
+
 RUN pip install -r requirements.txt
+
 
 RUN airflow db init
 
@@ -68,6 +70,12 @@ RUN airflow users create \
    --role Admin \
    --email admin@example.com \
    --password admin
+
+# Add entrypoint script to source /etc/environment at runtime
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Expose the necessary ports (optional if Hugging Face already handles port exposure)
 EXPOSE 7860

@@ -75,12 +75,10 @@ COPY --chown=root:root entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 USER airflow
-   
-# Add entrypoint script to source /etc/environment at runtime
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+
 
 ENTRYPOINT ["/entrypoint.sh"]
+
 
 # Expose the necessary ports (optional if Hugging Face already handles port exposure)
 EXPOSE 7860

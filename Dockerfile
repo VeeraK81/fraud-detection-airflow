@@ -39,10 +39,9 @@ RUN --mount=type=secret,id=usnamepassword,mode=0444,required=true \
     export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="postgresql+psycopg2://$USERNAME_PASSWORD@ep-wandering-hat-a25hgllw.eu-central-1.aws.neon.tech/airflowdb?sslmode=require&options=-csearch_path=airflow" && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" >> /etc/environment
 
-    
-RUN rm /tmp/usnamepassword
-# RUN rm /tmp/MLFLOW_BACKEND_STORE
+RUN echo "Value is root $AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
 
+    
 RUN usermod -u 1000 airflow
 
 # Ensure correct permissions for the .pem file
@@ -54,6 +53,8 @@ USER airflow
 ENV S3_BUCKET_NAME=$S3_BUCKET_NAME
 ENV S3_KEY=$S3_KEY
 ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
+
+RUN echo
 
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt

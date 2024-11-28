@@ -37,8 +37,10 @@ RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
     echo "AIRFLOW__CORE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
-    echo "AIRFLOW__CELERY__RESULT_BACKEND=db+$(cat /tmp/POSTGRES_URL)" >> /etc/environment
-
+    echo "AIRFLOW__CELERY__RESULT_BACKEND=db+$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
+    export AIRFLOW__CORE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) && \
+    export AIRFLOW__CORE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) 
+    
 RUN rm /tmp/POSTGRES_URL
 # RUN rm /tmp/MLFLOW_BACKEND_STORE
 

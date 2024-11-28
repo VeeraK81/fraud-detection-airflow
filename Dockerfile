@@ -35,12 +35,10 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     cat /run/secrets/DBURL > /tmp/DBURL && \
-    export USERNAME_PASSWORD=$(cat /tmp/DBURL) && \
-    export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$USERNAME_PASSWORD && \
-    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" >> /etc/environment
+    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)" >> /etc/environment
 
 # Use ENV to set an environment variable in the Dockerfile
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="${PATH}:/tmp/DBURL"
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="${PATH}:/etc/environment/AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
 
 RUN rm /tmp/DBURL 
 

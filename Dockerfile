@@ -41,6 +41,7 @@ RUN --mount=type=secret,id=usnamepassword,mode=0444,required=true \
 
 ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN ""
 RUN echo $(cat /tmp/usnamepassword)
+
     
 RUN usermod -u 1000 airflow
 

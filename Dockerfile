@@ -37,9 +37,6 @@ RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     cat /run/secrets/DBURL > /tmp/DBURL && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)" >> /etc/environment
 
-
-ENTRYPOINT ["/entrypoint.sh"]
-
 RUN rm /tmp/DBURL 
 
     
@@ -79,6 +76,8 @@ USER root
 COPY --chown=root:root entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+
+ENTRYPOINT ["/entrypoint.sh"]
 USER airflow
 
 # Expose the necessary ports (optional if Hugging Face already handles port exposure)

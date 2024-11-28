@@ -34,10 +34,12 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
-    cat /run/secrets/DBURL > /tmp/DBURL && \
-    ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)
+    cat /run/secrets/DBURL > /tmp/DBURL 
 
-RUN rm /tmp/DBURL 
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="file:///tmp/DBURL"
+
+
+# RUN rm /tmp/DBURL 
 
     
 RUN usermod -u 1000 airflow

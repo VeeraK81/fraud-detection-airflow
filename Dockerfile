@@ -36,8 +36,6 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     cat /run/secrets/DBURL > /tmp/DBURL 
 
-# Use ENV to set an environment variable in the Dockerfile
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="/etc/environment/AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
 
 RUN rm /tmp/DBURL 
 

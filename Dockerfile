@@ -33,12 +33,14 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # IF YOU STAGE THAT IN HUGGING FACE SPACE, YOU DON'T HAVE A CHOICE THOUGH
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
-RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
-    cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
-    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
-    export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) 
+RUN --mount=type=secret,id=usnamepassword,mode=0444,required=true \
+    cat /run/secrets/usnamepassword > /tmp/usnamepassword && \
+    export USERNAME_PASSWORD=$(cat /tmp/usnamepassword) && \
+    export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="postgresql+psycopg2://$USERNAME_PASSWORD@ep-wandering-hat-a25hgllw.eu-central-1.aws.neon.tech/airflowdb?sslmode=require&options=-csearch_path=airflow" && \
+    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" >> /etc/environment
+
     
-RUN rm /tmp/POSTGRES_URL
+RUN rm /tmp/usnamepassword
 # RUN rm /tmp/MLFLOW_BACKEND_STORE
 
 RUN usermod -u 1000 airflow

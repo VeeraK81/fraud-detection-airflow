@@ -36,7 +36,7 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     cat /run/secrets/DBURL > /tmp/DBURL 
 
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="file:///tmp/DBURL"
+# ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="file:///tmp/DBURL"
 
 
 # RUN rm /tmp/DBURL 

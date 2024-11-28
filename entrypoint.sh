@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# # Check if the file exists and read the connection string from it
-# if [ ! -f /etc/environment/AIRFLOW__DATABASE__SQL_ALCHEMY_CONN ]; then
-#   echo "Error: /etc/environment/AIRFLOW__DATABASE__SQL_ALCHEMY_CONN file does not exist"
-#   exit 1
-# fi
+# Read the contents of the DBURL secret file into the environment variable
+if [ -f /tmp/DBURL ]; then
+  export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)
+else
+  echo "Error: /tmp/DBURL not found."
+  exit 1
+fi
 
-# # Read the connection string from the file
-export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /run/secrets/DBURL)
-
-
-# Optionally, print the environment variable to verify
+# Print the environment variable for debugging (optional)
 echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN is set to: $AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
 
-# Start Airflow scheduler and webserver
+# Execute the passed command (this will run the Airflow command or any other passed command)
 exec "$@"

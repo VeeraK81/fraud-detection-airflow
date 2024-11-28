@@ -39,7 +39,8 @@ RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$USERNAME_PASSWORD && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$AIRFLOW__DATABASE__SQL_ALCHEMY_CONN" >> /etc/environment
 
-ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+# Use ENV to set an environment variable in the Dockerfile
+ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN="${PATH}:/tmp/DBURL"
 
 RUN rm /tmp/DBURL 
 

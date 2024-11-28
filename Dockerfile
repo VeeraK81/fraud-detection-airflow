@@ -34,8 +34,11 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
-    cat /run/secrets/DBURL > /tmp/DBURL 
+    cat /run/secrets/DBURL > /tmp/DBURL && \
+    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)" >> /etc/environment
 
+
+ENTRYPOINT ["/entrypoint.sh"]
 
 RUN rm /tmp/DBURL 
 
@@ -77,10 +80,6 @@ COPY --chown=root:root entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 USER airflow
-
-
-ENTRYPOINT ["/entrypoint.sh"]
-
 
 # Expose the necessary ports (optional if Hugging Face already handles port exposure)
 EXPOSE 7860

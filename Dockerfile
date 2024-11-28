@@ -4,7 +4,7 @@ FROM apache/airflow:2.7.0
 # Set environment variables
 ENV AIRFLOW_HOME=/opt/airflow
 ENV AIRFLOW__CORE__LOAD_EXAMPLES=False
-ENV AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+ENV AIRFLOW__CORE__EXECUTOR=SequentialExecutor
 ENV AIRFLOW__WEBSERVER__WEB_SERVER_MASTER_TIMEOUT=300
 ENV AIRFLOW__WEBSERVER__WORKER_CLASS=gevent
 ENV AIRFLOW__WEBSERVER__WEB_SERVER_PORT=7860
@@ -36,9 +36,7 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 RUN --mount=type=secret,id=POSTGRES_URL,mode=0444 \
     cat /run/secrets/POSTGRES_URL > /tmp/POSTGRES_URL && \
     echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
-    echo "AIRFLOW__CORE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL)" >> /etc/environment && \
-    export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) && \
-    export AIRFLOW__CORE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) 
+    export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/POSTGRES_URL) 
     
 RUN rm /tmp/POSTGRES_URL
 # RUN rm /tmp/MLFLOW_BACKEND_STORE

@@ -35,7 +35,7 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
 RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
     cat /run/secrets/DBURL > /tmp/DBURL && \
-    echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)" >> /etc/environment
+    ENV AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)
 
 RUN rm /tmp/DBURL 
 

@@ -7,7 +7,8 @@
 # fi
 
 # # Read the connection string from the file
-# export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /etc/environment/AIRFLOW__DATABASE__SQL_ALCHEMY_CONN)
+export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /run/secrets/DBURL)
+
 
 # Optionally, print the environment variable to verify
 echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN is set to: $AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"

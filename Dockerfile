@@ -61,16 +61,16 @@ COPY requirements.txt requirements.txt
 
 RUN pip install -r requirements.txt
 
-RUN airflow db init
+# RUN airflow db init
 
-# Create default admin user for Airflow (username: admin, password: admin)
-RUN airflow users create \
-   --username admin \
-   --firstname Admin \
-   --lastname User \
-   --role Admin \
-   --email admin@example.com \
-   --password admin
+# # Create default admin user for Airflow (username: admin, password: admin)
+# RUN airflow users create \
+#    --username admin \
+#    --firstname Admin \
+#    --lastname User \
+#    --role Admin \
+#    --email admin@example.com \
+#    --password admin
 
 USER root
 

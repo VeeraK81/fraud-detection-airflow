@@ -11,5 +11,15 @@ fi
 # Print the environment variable for debugging (optional)
 echo "AIRFLOW__DATABASE__SQL_ALCHEMY_CONN is set to: $AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"
 
+airflow db init
+
+airflow users create \
+    --username admin \
+    --firstname Admin \
+    --lastname User \
+    --role Admin \
+    --email admin@example.com \
+    --password admin
+
 # Execute the passed command (this will run the Airflow command or any other passed command)
 exec "$@"

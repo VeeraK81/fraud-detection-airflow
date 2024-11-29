@@ -129,10 +129,9 @@ with DAG(
             os.environ['AWS_SECRET_ACCESS_KEY'] = aws_secret_access_key
 
             # Use the S3 model URI pointing to your specific model
-            model_uri ="s3://flow-bucket-ml/training-models/3/4f6b131867bd484e88de2234eb15e868/artifacts/fraud_detection_model/"
-            model = mlflow.pyfunc.load_model(model_uri)
+            model = mlflow.pyfunc.load_model(MODEL_URI)
             # Get the dependencies of the model
-            model_dependencies = mlflow.pyfunc.get_model_dependencies(model_uri)
+            model_dependencies = mlflow.pyfunc.get_model_dependencies(MODEL_URI)
 
             # Predict using the MLflow model
             predictions = model.predict(X)

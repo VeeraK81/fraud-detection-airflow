@@ -42,6 +42,8 @@ RUN chmod 400 /opt/airflow/ml-training-key.pem \
 
 USER airflow
 
+ENV BACKEND_STORE_URI=$MLFLOW_BACKEND_STORE
+
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt
 

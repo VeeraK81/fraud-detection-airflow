@@ -194,10 +194,6 @@ with DAG(
         Uploads transaction data to S3 in CSV format, appending to an existing file if present.
         """
         
-        S3_KEY="fraud-detection-data/transaction-data.csv"
-        S3_BUCKET_NAME="flow-bucket-ml"
-        
-        
         if not transaction_data:
             logging.error("No transaction data provided, aborting S3 upload.")
             return
@@ -283,7 +279,7 @@ with DAG(
                     INSERT INTO transaction_fraud_detection (id, trans_date_trans_time, cc_num, trans_num, is_fraud)
                     VALUES (%s, %s, %s, %s, %s);
                 """
-                cursor.execute(query_insert, (id, trans_date, cc_num, trans_num, prediction_results[0]))
+                cursor.execute(query_insert, (id, datetime.fromtimestamp(trans_date / 1000), cc_num, trans_num, prediction_results[0]))
                 conn.commit()  # Commit the changes to the database
             else:
                 logging.info("No fraud detected.")

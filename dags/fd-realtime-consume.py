@@ -144,6 +144,7 @@ with DAG(
             return None
     
     
+    
     @task
     def process_result(query_result, predictions):
         if query_result:
@@ -251,6 +252,9 @@ with DAG(
         config = kwargs.get('dag_run').conf
         task_instance = kwargs['ti']
         id = config.get('id')
+        trans_date = config.get('trans_date_trans_time')
+        cc_num = config.get('cc_num')
+        trans_num = config.get('trans_num')
         trans_num = config.get('trans_num')
         
         # Fetch prediction results using XCom
@@ -262,16 +266,33 @@ with DAG(
             conn = hook.get_conn()  # Get the connection object
             cursor = conn.cursor()
 
-            # Sample query with the transaction ID
-            query = f"UPDATE transaction SET is_fraud = {prediction_results[0]} WHERE id={id} and trans_num='{trans_num}';"
-            
-            cursor.execute(query)
+            # Sample query to update the transaction record with fraud detection status
+            query_update = """
+                UPDATE transaction 
+                SET is_fraud = %s 
+                WHERE id = %s AND trans_num = %s;
+            """
+            cursor.execute(query_update, (prediction_results[0], id, trans_num))
             conn.commit()  # Commit the changes to the database
+            
+            predictions=[1]
+            if predictions and any(pred == 1 for pred in predictions):
+                logging.info("Fraud detected. Sending email notification.")
+                # Sample query to insert a new record in the transaction_fraud_detection table
+                query_insert = """
+                    INSERT INTO transaction_fraud_detection (id, trans_date_trans_time, cc_num, trans_num, is_fraud)
+                    VALUES (%s, %s, %s, %s, %s);
+                """
+                cursor.execute(query_insert, (id, trans_date, cc_num, trans_num, prediction_results[0]))
+                conn.commit()  # Commit the changes to the database
+            else:
+                logging.info("No fraud detected.")
+
             cursor.close()
-            
+
             # Log the update
-            logging.info("Transaction updated successfully.")
-            
+            logging.info("Transaction updated and fraud detection logged successfully.")
+
         except Exception as e:
             logging.error(f"Failed to update the database: {e}")
             raise
@@ -281,9 +302,10 @@ with DAG(
 
     # Define the tasks and task dependencies
     query_task = query_postgres()
-    prediction_results = mlflow_predict(query_task)
+    prediction_results = mlflow_predict(query_task)    
     process_task = process_result(query_task, prediction_results)  # Pass the result to the next task
     upload_s3 = upload_or_append_to_s3(process_task)
     upload_transaction_postgres = update_database_processed()
 
     query_task >> prediction_results >> process_task >> upload_s3 >> upload_transaction_postgres
+    

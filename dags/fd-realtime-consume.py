@@ -270,9 +270,10 @@ with DAG(
             """
             cursor.execute(query_update, (prediction_results[0], id, trans_num))
             conn.commit()  # Commit the changes to the database
+            # For testing purposefully set prediction value is 1.  It should be removed.
             
-            predictions=[1]
-            if predictions and any(pred == 1 for pred in predictions):
+            prediction_results[0]=1
+            if prediction_results and any(pred == 1 for pred in prediction_results):
                 logging.info("Fraud detected. Sending email notification.")
                 # Sample query to insert a new record in the transaction_fraud_detection table
                 query_insert = """

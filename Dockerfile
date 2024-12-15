@@ -53,7 +53,6 @@ USER root
 COPY --chown=root:root entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-
 ENTRYPOINT ["/entrypoint.sh"]
 USER airflow
 

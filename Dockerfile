@@ -30,8 +30,8 @@ RUN --mount=type=secret,id=SERVER_SECRETS,mode=0444 \
 # IF YOU STAGE THAT IN HUGGING FACE SPACE, YOU DON'T HAVE A CHOICE THOUGH
 # SO MAKE SURE YOUR SPACE IS PRIVATE
 # GET POSTGRES URL FROM HUGGING FACE SECRETs
-RUN --mount=type=secret,id=DBURL,mode=0444,required=true \
-    cat /run/secrets/DBURL > /tmp/DBURL 
+RUN --mount=type=secret,id=FD_DBURL,mode=0444,required=true \
+    cat /run/secrets/FD_DBURL > /tmp/FD_DBURL 
 
     
 RUN usermod -u 1000 airflow
@@ -45,7 +45,7 @@ USER airflow
 # Install any additional dependencies if needed
 COPY requirements.txt requirements.txt
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 USER root
 

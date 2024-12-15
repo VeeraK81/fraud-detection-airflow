@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # Read the contents of the DBURL secret file into the environment variable
-if [ -f /tmp/DBURL ]; then
-  export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/DBURL)
+if [ -f /tmp/FD_DBURL ]; then
+  export AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=$(cat /tmp/FD_DBURL)
 else
-  echo "Error: /tmp/DBURL not found."
+  echo "Error: /tmp/FD_DBURL not found."
   exit 1
 fi
 
@@ -20,7 +20,7 @@ airflow users create \
     --password admin
 
 
-rm /tmp/DBURL 
+rm /tmp/FD_DBURL 
 
 # Execute the passed command (this will run the Airflow command or any other passed command)
 exec "$@"

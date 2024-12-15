@@ -51,6 +51,7 @@ USER root
 
 # Copy entrypoint script and ensure correct permissions
 COPY --chown=root:root entrypoint.sh /entrypoint.sh
+
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]

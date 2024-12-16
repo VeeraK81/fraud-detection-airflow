@@ -252,7 +252,6 @@ with DAG(
         trans_date = config.get('trans_date_trans_time')
         cc_num = config.get('cc_num')
         trans_num = config.get('trans_num')
-        trans_num = config.get('trans_num')
         
         # Fetch prediction results using XCom
         prediction_results = task_instance.xcom_pull(task_ids='mlflow_predict')
@@ -271,9 +270,10 @@ with DAG(
             """
             cursor.execute(query_update, (prediction_results[0], id, trans_num))
             conn.commit()  # Commit the changes to the database
-            # For testing purposefully set prediction value is 1.  It should be removed.
             
+            # Purposefully set prediction value as 1 in order to check email alert.  It should be removed.
             prediction_results[0]=1
+            
             if prediction_results and any(pred == 1 for pred in prediction_results):
                 logging.info("Fraud detected. Sending email notification.")
                 # Sample query to insert a new record in the transaction_fraud_detection table
@@ -292,8 +292,8 @@ with DAG(
             logging.info("Transaction updated and fraud detection logged successfully.")
 
         except Exception as e:
-            logging.error(f"Failed to update the database: {e}")
-            raise
+            logging.warning(f"Failed to update the database: {e}")
+            return None
         
     
 

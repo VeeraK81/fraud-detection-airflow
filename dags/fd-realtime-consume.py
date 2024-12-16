@@ -8,6 +8,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.operators.python_operator import PythonOperator
 from airflow.utils.trigger_rule import TriggerRule
+from airflow.utils.dates import days_ago
 from airflow.models import Variable
 import mlflow
 import pandas as pd
@@ -31,14 +32,14 @@ DAG_ID = 'fd_data_consume_dag'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2024, 11, 18),
+    'start_date': days_ago(1),
     'retries': 2,
 }
 
 # Define the DAG
 with DAG(
     dag_id=DAG_ID,
-    schedule_interval=None,
+    schedule_interval='@hourly',
     default_args=default_args,
     description="Upload or append data to S3 for fraud detection training",
     catchup=False,

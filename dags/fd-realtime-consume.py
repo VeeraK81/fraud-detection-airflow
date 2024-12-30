@@ -65,19 +65,19 @@ with DAG(
             trans_num = config.get('trans_num')
                 
         try:
-            # Use PostgresHook to connect to the Neon database
+            # Use PostgresHook to connect to the database
             hook = PostgresHook(postgres_conn_id="postgres_neon")
             conn = hook.get_conn()  # Get the connection object
-            cursor = conn.cursor()
-
             
-            # # Sample query with the transaction ID
-            # query = f"SELECT * FROM transaction WHERE id={id} and trans_num='{trans_num}';"
-            query = f'''SELECT 
-                        t.transaction_id as id,
-                        t.trans_date as trans_date_trans_time,
+            # Using a context manager to ensure that cursor is closed after use
+            with conn.cursor() as cursor:
+                # Parameterized query to prevent SQL injection
+                query = '''
+                    SELECT 
+                        t.transaction_id AS id,
+                        t.trans_date AS trans_date_trans_time,
                         c.cc_num,
-                        m.merchant_name as merchant,
+                        m.merchant_name AS merchant,
                         m.category,
                         t.amount AS amt,
                         c.first_name AS first,
@@ -94,8 +94,8 @@ with DAG(
                         c.dob,
                         t.trans_num,
                         t.unix_time,
-                        lm.lat as merch_lat,
-                        lm.long as merch_long,
+                        lm.lat AS merch_lat,
+                        lm.long AS merch_long,
                         is_fraud
                     FROM 
                         Transactions t
@@ -108,15 +108,19 @@ with DAG(
                         LEFT JOIN Refunds r ON t.transaction_id = r.transaction_id
                         LEFT JOIN Chargebacks cb ON t.transaction_id = cb.transaction_id
                         LEFT JOIN Subscriptions sub ON c.customer_id = sub.customer_id
-                        WHERE t.transaction_id={id} and trans_num={trans_num};'''
-            
-            cursor.execute(query)
-            result = cursor.fetchall()  # Get the query result
-            cursor.close()
-            
-            # Log and return the result to store it in XCom
-            logging.info("Query result: %s", result)
-            return result  # This will be stored in XCom
+                    WHERE t.transaction_id = %s AND t.trans_num = %s;
+                '''
+                
+                # Execute the query with parameters to avoid SQL injection
+                cursor.execute(query, (id, trans_num))
+                
+                # Fetch the result
+                result = cursor.fetchall()
+                
+                # Log and return the result to store it in XCom
+                logging.info("Query result: %s", result)
+                return result  # This will be stored in XCom
+
         except Exception as e:
             logging.error(f"Failed to query the database: {e}")
             return None

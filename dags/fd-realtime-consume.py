@@ -61,7 +61,7 @@ with DAG(
             logging.warning("No transaction data found in config. Please check dag_run.conf.")
         else:
             logging.info(f"Received transaction data: {config}")
-            id = config.get('id')
+            id = config.get('transaction_id')
             trans_num = config.get('trans_num')
                 
         try:
@@ -71,8 +71,44 @@ with DAG(
             cursor = conn.cursor()
 
             
-            # Sample query with the transaction ID
-            query = f"SELECT * FROM transaction WHERE id={id} and trans_num='{trans_num}';"
+            # # Sample query with the transaction ID
+            # query = f"SELECT * FROM transaction WHERE id={id} and trans_num='{trans_num}';"
+            query = f'''SELECT 
+                        t.transaction_id as id,
+                        t.trans_date as trans_date_trans_time,
+                        c.cc_num,
+                        m.merchant_name as merchant,
+                        m.category,
+                        t.amount AS amt,
+                        c.first_name AS first,
+                        c.last_name AS last,
+                        c.gender,
+                        c.street,
+                        c.city,
+                        c.state,
+                        c.zip,
+                        c.lat,
+                        c.long,
+                        c.city_pop,
+                        c.job,
+                        c.dob,
+                        t.trans_num,
+                        t.unix_time,
+                        lm.lat as merch_lat,
+                        lm.long as merch_long,
+                        is_fraud
+                    FROM 
+                        Transactions t
+                        LEFT JOIN Customers c ON t.customer_id = c.customer_id
+                        LEFT JOIN Merchants m ON t.merchant_id = m.merchant_id
+                        LEFT JOIN Products p ON t.product_id = p.product_id
+                        LEFT JOIN Location l ON t.location_id = l.location_id
+                        LEFT JOIN Payments pay ON t.transaction_id = pay.transaction_id
+                        LEFT JOIN Location lm ON m.location_id = l.location_id
+                        LEFT JOIN Refunds r ON t.transaction_id = r.transaction_id
+                        LEFT JOIN Chargebacks cb ON t.transaction_id = cb.transaction_id
+                        LEFT JOIN Subscriptions sub ON c.customer_id = sub.customer_id
+                        WHERE t.transaction_id={id} and trans_num={trans_num};'''
             
             cursor.execute(query)
             result = cursor.fetchall()  # Get the query result

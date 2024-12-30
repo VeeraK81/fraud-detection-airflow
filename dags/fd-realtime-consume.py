@@ -288,9 +288,7 @@ with DAG(
         """
         config = kwargs.get('dag_run').conf
         task_instance = kwargs['ti']
-        id = config.get('id')
-        trans_date = config.get('trans_date_trans_time')
-        cc_num = config.get('cc_num')
+        id = config.get('transaction_id')
         trans_num = config.get('trans_num')
         
         # Fetch prediction results using XCom
@@ -304,9 +302,9 @@ with DAG(
 
             # Sample query to update the transaction record with fraud detection status
             query_update = """
-                UPDATE transaction 
+                UPDATE transactions 
                 SET is_fraud = %s 
-                WHERE id = %s AND trans_num = %s;
+                WHERE transaction_id = %s AND trans_num = %s;
             """
             cursor.execute(query_update, (prediction_results[0], id, trans_num))
             conn.commit()  # Commit the changes to the database
@@ -318,10 +316,10 @@ with DAG(
                 logging.info("Fraud detected. Sending email notification.")
                 # Sample query to insert a new record in the transaction_fraud_detection table
                 query_insert = """
-                    INSERT INTO transaction_fraud_detection (id, trans_date_trans_time, cc_num, trans_num, is_fraud)
-                    VALUES (%s, %s, %s, %s, %s);
+                    INSERT INTO transactions_fraud_detection (id, trans_num, is_fraud)
+                    VALUES (%s, %s, %s);
                 """
-                cursor.execute(query_insert, (id, datetime.fromtimestamp(trans_date / 1000), cc_num, trans_num, prediction_results[0]))
+                cursor.execute(query_insert, (id, trans_num, prediction_results[0]))
                 conn.commit()  # Commit the changes to the database
             else:
                 logging.info("No fraud detected.")

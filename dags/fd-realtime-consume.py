@@ -104,7 +104,7 @@ with DAG(
                         LEFT JOIN Products p ON t.product_id = p.product_id
                         LEFT JOIN Location l ON t.location_id = l.location_id
                         LEFT JOIN Payments pay ON t.transaction_id = pay.transaction_id
-                        LEFT JOIN Location lm ON m.location_id = l.location_id
+                        LEFT JOIN Location lm ON m.location_id = lm.location_id
                         LEFT JOIN Refunds r ON t.transaction_id = r.transaction_id
                         LEFT JOIN Chargebacks cb ON t.transaction_id = cb.transaction_id
                         LEFT JOIN Subscriptions sub ON c.customer_id = sub.customer_id

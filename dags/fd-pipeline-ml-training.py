@@ -54,14 +54,14 @@ DAG_ID = 'fd_jenkins_ec2_training_dag'
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
-    'start_date': datetime(2023, 1, 1),
+    'start_date': datetime(2025, 1, 1),
     'retries': 1,
 }
 
 # Define the DAG
 with DAG(
     dag_id=DAG_ID,
-    schedule_interval=None,
+    schedule_interval='0 2 * * *',
     default_args=default_args,
     description="Poll Jenkins, launch EC2, and run ML training",
     catchup=False,
@@ -87,8 +87,6 @@ with DAG(
         # Step 2: Poll the latest build's status
         build_url = f"{JENKINS_URL}/job/{JENKINS_JOB_NAME}/{latest_build_number}/api/json"
         
-        print("psURL:", os.getenv('POSTGRES_URL'))
-
         while True:
             response = requests.get(build_url, auth=(JENKINS_USER, JENKINS_TOKEN))
             if response.status_code == 200:
@@ -194,6 +192,7 @@ with DAG(
         return public_ip
 
 
+    #  Step 5: Run mlflow and start train model as a @task 
     @task
     def run_training_via_paramiko(public_ip):
         """Use Paramiko to SSH into the EC2 instance and run ML training."""
@@ -250,7 +249,7 @@ with DAG(
     
     
 
-    
+    # Step 7: Send logs to S3 bucket
     @task
     def write_logs_s3():
         # S3 Configuration
@@ -328,5 +327,6 @@ with DAG(
     # Task Chaining (DAG Workflow)
     write_logs_task = write_logs_s3()
     
+    # Define the task flow sequence in the pipeline    
     jenkins_poll >> create_ec2_instance >> check_ec2_instance >> ec2_public_ip >> ssh_training_task >> terminate_instance >> write_logs_task
 

@@ -194,11 +194,8 @@ def calculate_metrics(**kwargs):
     print("reference_df", reference_df)
 
     # Create a column mapping for Evidently (adjust according to your data)
-    
     data = [reference_df, current_df]
 
-    
-    
     # Push the metrics to Evidently using Airflow XCom
     kwargs['ti'].xcom_push(key='evidently_metrics', value=data)
     
@@ -210,12 +207,12 @@ def send_to_evidently(**kwargs):
     reference_df = data[0]
     current_df = data[1]
     
- 
-    
+    print("reference_df", reference_df)
+    print("current_df", current_df)
     # If you have specific target or prediction columns, you can define them here
     column_mapping = ColumnMapping(
-        prediction=None,  # Specify prediction column name if available
-        target=None,       # Specify target column name if available
+        prediction='prediction',  # Specify prediction column name if available
+        target='is_fraud',       # Specify target column name if available
         numerical_features=list(reference_df.columns),  # Assuming all are numerical
         categorical_features=None
     )

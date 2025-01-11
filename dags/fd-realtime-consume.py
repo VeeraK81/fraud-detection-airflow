@@ -21,7 +21,7 @@ from airflow.models import Variable
 from airflow.models.dag import DAG
 import numpy as np
 
-
+# S3 Configuration: Load from Airflow Variables
 MODEL_URI = Variable.get("MODEL_URI")
 S3_KEY=Variable.get("S3_KEY")
 S3_BUCKET_NAME=Variable.get("S3_BUCKET_NAME")
@@ -39,14 +39,14 @@ default_args = {
 # Define the DAG
 with DAG(
     dag_id=DAG_ID,
-    schedule_interval='@hourly',
+    schedule_interval='0 0 * * *',
     default_args=default_args,
     description="Upload or append data to S3 for fraud detection training",
     catchup=False,
     tags=['fraud-detection-upload-s3'],
 ) as dag:
     
-    # Your custom database URL (Neon Tech Postgres connection)
+    # Send query to database to retrieve transactions
     @task
     def query_postgres(**kwargs):
         """
@@ -54,6 +54,7 @@ with DAG(
         """
         config = kwargs.get('dag_run').conf
         
+        # create empty variables  
         id =""
         trans_num = ""
         
@@ -126,7 +127,7 @@ with DAG(
             return None
         
         
-        
+    # Download model and predict
     @task
     def mlflow_predict(data):
         """
@@ -185,50 +186,55 @@ with DAG(
             return None
     
     
-    
+    # It processes query results and predictions, transforming them into a structured format.
     @task
     def process_result(query_result, predictions):
+        # Check if there is a query result to process
         if query_result:
             logging.info(f"Processing query result: {query_result}")
             
+            # Iterate through each row of the query result
             for data in query_result:
+                # Example of inspecting individual fields in the data (commented out)
                 # for x in range(19):
                 #     print(f"data[{x}]: {data[x]}")
                 
+                # Transform the data into a desired structure with specific formatting
                 transformed_data = [
                     data[0],  # ID
-                    data[1].strftime('%Y-%m-%d %H:%M:%S'),  # Timestamp formatted to string
-                    str(data[2]),  # Long ID
+                    data[1].strftime('%Y-%m-%d %H:%M:%S'),  # Timestamp formatted as a string
+                    str(data[2]),  # Long ID converted to a string
                     data[3],  # Name
-                    data[4],
-                    str(data[5]),  # Amount (2.86 as string)
+                    data[4],  # Field 5
+                    str(data[5]),  # Amount (e.g., 2.86) converted to a string
                     data[6],  # First name
                     data[7],  # Last name
                     data[8],  # Gender
-                    data[9],
-                    data[10], 
-                    data[11],
-                    data[12],  
-                    str(data[13]),  # Latitude
-                    str(data[14]),  # Longitude
-                    str(data[15]),  # Employee ID
+                    data[9],  # Field 10
+                    data[10],  # Field 11
+                    data[11],  # Field 12
+                    data[12],  # Field 13
+                    str(data[13]),  # Latitude converted to a string
+                    str(data[14]),  # Longitude converted to a string
+                    str(data[15]),  # Employee ID converted to a string
                     data[16],  # Job title
-                    data[17].strftime('%Y-%m-%d'),  # Birthdate formatted as date string
+                    data[17].strftime('%Y-%m-%d'),  # Birthdate formatted as a date string
                     data[18],  # Hashed ID
-                    data[19],
-                    float(data[20]),
-                    float(data[21]),
-                    predictions[0]
+                    data[19],  # Field 20
+                    float(data[20]),  # Field 21 converted to a float
+                    float(data[21]),  # Field 22 converted to a float
+                    predictions[0]  # Prediction value (first element in predictions)
                 ]
 
-            return transformed_data
+            return transformed_data  # Return the processed and transformed data
                 
         else:
+            # Log a warning if there is no query result to process
             logging.warning("No query result to process.")
             return None
     
     
-    
+    # It processes append data to S3 bucket
     @task
     def upload_or_append_to_s3(transaction_data):
         """
@@ -280,7 +286,7 @@ with DAG(
             raise
         
     
-    
+    # It processes update results and predictions
     @task(trigger_rule=TriggerRule.ALL_SUCCESS)
     def update_database_processed(**kwargs):
         """
@@ -334,8 +340,6 @@ with DAG(
             return None
         
     
-
-
     # Define the tasks and task dependencies
     query_task = query_postgres()
     prediction_results = mlflow_predict(query_task)    
@@ -343,5 +347,6 @@ with DAG(
     upload_s3 = upload_or_append_to_s3(process_task)
     upload_transaction_postgres = update_database_processed()
 
+    # Define the task flow sequence in the pipeline
     query_task >> prediction_results >> process_task >> upload_s3 >> upload_transaction_postgres
     

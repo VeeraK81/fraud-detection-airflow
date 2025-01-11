@@ -170,7 +170,6 @@ MLFLOW_EXPERIMENT_ID=Variable.get("MLFLOW_EXPERIMENT_ID")
 # Calculate metrics using Evidently
 def calculate_metrics(**kwargs):
     # Set MLflow tracking URI
-    # mlflow.set_tracking_uri("http://host.docker.internal:8082")
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
     # Retrieve the runs from a specific experiment
@@ -190,6 +189,8 @@ def calculate_metrics(**kwargs):
     reference_df = pd.DataFrame([reference_data])
     current_df = pd.DataFrame([current_data])
     
+    print("latest_run_id", latest_run_id)
+    print("reference_run_id", reference_run_id)
     print("reference_df", reference_df)
 
     # Create a column mapping for Evidently (adjust according to your data)

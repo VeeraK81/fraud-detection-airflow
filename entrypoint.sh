@@ -19,7 +19,7 @@ airflow users create \
     --email admin@example.com \
     --password admin
 
-
+# remove temp variable
 rm /tmp/FD_DBURL 
 
 # Execute the passed command (this will run the Airflow command or any other passed command)
